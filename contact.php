@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/includes/init.php';
 
-$sent = false;
+$sent = isset($_GET['sent']) && $_GET['sent'] === '1';
 $errors = array();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) {
@@ -11,16 +11,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim(isset($_POST['email']) ? $_POST['email'] : '');
     $subject = trim(isset($_POST['subject']) ? $_POST['subject'] : '');
     $message = trim(isset($_POST['message']) ? $_POST['message'] : '');
-    $hp = isset($_POST['website']) ? trim($_POST['website']) : '';
+    $hp = isset($_POST['company_website_check']) ? trim($_POST['company_website_check']) : '';
 
-    if ($hp !== '') { $sent = true; } // silently drop bots
+    if ($hp !== '') {
+        $errors[] = 'Honeypot field is not empty.';
+    }
     elseif ($name === '' || $email === '' || $message === '') { $errors[] = 'Please fill in all required fields.'; }
     elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) { $errors[] = 'Please enter a valid e-mail address.'; }
 
     if (!$errors && !$sent) {
-        db_exec('INSERT INTO messages (name, email, subject, message, ip, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-            array($name, $email, $subject, $message, $_SERVER['REMOTE_ADDR'], date('Y-m-d H:i:s')));
-        $sent = true;
+        $result = db_exec(
+            'INSERT INTO messages (name, email, subject, message, ip, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+            array(
+                $name,
+                $email,
+                $subject,
+                $message,
+                $_SERVER['REMOTE_ADDR'],
+                date('Y-m-d H:i:s')
+            )
+        );
+
+        if ($result !== false) {
+            redirect(url('/contact?sent=1'));
+        } else {
+            $errors[] = 'Sorry, your message could not be saved. Please try again.';
+        }
     }
 }
 
@@ -41,7 +57,7 @@ include __DIR__ . '/includes/header.php';
           <?php foreach ($errors as $er): ?><div class="alert alert-danger py-2"><?php echo e($er); ?></div><?php endforeach; ?>
           <form method="post" novalidate>
             <?php echo csrf_field(); ?>
-            <input type="text" name="website" value="" style="position:absolute;left:-9999px" tabindex="-1" autocomplete="off">
+            <input type="text" name="company_website_check" value="" style="position:absolute;left:-9999px" tabindex="-1" autocomplete="off">
             <div class="row g-3">
               <div class="col-md-6"><label class="form-label">Your Name *</label><input class="form-control" name="name" required></div>
               <div class="col-md-6"><label class="form-label">Your Email *</label><input class="form-control" type="email" name="email" required></div>
@@ -56,3 +72,7 @@ include __DIR__ . '/includes/header.php';
   </div>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
+
+
+
+
