@@ -45,7 +45,7 @@ function post_card($p)
     $h .= '<p class="excerpt flex-grow-1">' . e(text_excerpt($ex, 110)) . '</p>';
   $h .= '<div class="post-footer"><div class="post-author"><div class="avatar"><i class="bi bi-lightning-charge-fill"></i></div>';
   $h .= '<div class="meta"><div class="name">' . e(site_name()) . '</div><div class="time"><i class="bi bi-clock"></i> ' . e(time_ago($p['created_at'])) . ' <span class="meta-dot">&bull;</span> ' . reading_time($p['content']) . ' min read</div></div></div>';
-  $h .= '<span class="post-arrow" aria-hidden="true"><i class="bi bi-arrow-up-right"></i></span></div>';
+  $h .= '<a href="' . e($postUrl) . '" class="post-arrow" aria-label="Read ' . e($p['title']) . '"><i class="bi bi-arrow-up-right"></i></a></div>';
     $h .= '</div></article></div>';
     return $h;
 }
@@ -100,3 +100,7 @@ function render_sidebar()
     <?php
     return ob_get_clean();
 }
+
+
+
+
