@@ -13,7 +13,7 @@ define('LIB_JSPDF', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.um
 define('LIB_PDFJS', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
 define('LIB_PDFLIB', 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js');
 define('LIB_JSZIP', 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
-define('LIB_QR', 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/2.0.4/qrcode.min.js');
+define('LIB_QR', 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js');
 define('LIB_TESSERACT', 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
 
 function tool_categories()
@@ -352,3 +352,4 @@ function tools_by_category($onlyEnabled = true)
     }
     return $out;
 }
+
