@@ -1,0 +1,215 @@
+﻿<div class="row g-4">
+  <div class="col-lg-6">
+    <label class="form-label fw-bold" for="jfIn">JSON input</label>
+    <textarea id="jfIn" class="form-control tool-text mono" style="min-height:380px" placeholder='{"name":"John","age":30}'></textarea>
+    <div class="d-flex flex-wrap gap-2 mt-2">
+      <button id="jfFormat" class="btn btn-primary btn-sm"><i class="bi bi-code-slash"></i> Format</button>
+      <button id="jfMinify" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrows-collapse"></i> Minify</button>
+      <button id="jfValidate" class="btn btn-outline-secondary btn-sm"><i class="bi bi-check2-circle"></i> Validate</button>
+      <button id="jfClear" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-lg"></i> Clear</button>
+    </div>
+    <div id="jfMsg" class="small mt-2"></div>
+  </div>
+  <div class="col-lg-6">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <label class="form-label fw-bold mb-0" for="jfOut">Result</label>
+      <div><button id="jfCopy" class="btn btn-sm btn-outline-secondary"><i class="bi bi-clipboard"></i> Copy</button>
+      <button id="jfDl" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download"></i> .json</button></div>
+    </div>
+    <textarea id="jfOut" class="form-control tool-text mono" style="min-height:380px" readonly></textarea>
+  </div>
+</div>
+<script>
+(function(){
+  var $=TK.$;
+
+  /* A small hand-written JSON parser (not JSON.parse) so we can:
+     - keep object keys in the exact order they were written (JSON.parse via a JS object silently
+       reorders keys that look like array indexes, e.g. {"b":1,"2":2} becomes {"2":2,"b":1})
+     - keep big integers and numbers such as 1.10 or 1E5 exactly as typed (JSON.parse rounds them
+       to a JS double and loses the original digits)
+     - report the exact line & column of a syntax error, and name common mistakes (trailing comma,
+       single quotes, unquoted keys) instead of the browser's generic message */
+  function parseJSON(text){
+    var i=0, len=text.length, line=1, col=1;
+    function peek(){ return text[i]; }
+    function loc(){ return {line:line, col:col}; }
+    function adv(){ var c=text[i]; i++; if(c==='\n'){ line++; col=1; } else { col++; } return c; }
+    function err(msg, at){ at=at||loc(); var e=new Error(msg+' (line '+at.line+', col '+at.col+')'); e.loc=at; throw e; }
+    function skipWs(){ while(i<len && /[ \t\n\r]/.test(text[i])) adv(); }
+
+    function parseValue(){
+      skipWs();
+      if(i>=len) err('Unexpected end of input - the JSON is incomplete');
+      var c=peek();
+      if(c==='{') return parseObject();
+      if(c==='[') return parseArray();
+      if(c==='"') return parseString();
+      if(c==='-' || (c>='0'&&c<='9')) return parseNumber();
+      if(text.substr(i,4)==='true'){ var s1=loc(); i+=4; col+=4; return {type:'lit', raw:'true'}; }
+      if(text.substr(i,5)==='false'){ var s2=loc(); i+=5; col+=5; return {type:'lit', raw:'false'}; }
+      if(text.substr(i,4)==='null'){ var s3=loc(); i+=4; col+=4; return {type:'lit', raw:'null'}; }
+      if(c==="'") err("Strings must use double quotes (\") - single quotes are not valid JSON");
+      err('Unexpected character "'+c+'"');
+    }
+    function parseObject(){
+      var start=loc(); adv(); /* { */
+      var pairs=[]; skipWs();
+      if(peek()==='}'){ adv(); return {type:'object', pairs:pairs}; }
+      while(true){
+        skipWs();
+        if(peek()==='}'){ err('Trailing comma before "}" is not allowed in JSON'); }
+        if(peek()!=='"'){
+          if(/[A-Za-z_$]/.test(peek()||'')) err('Object keys must be in double quotes, e.g. "key"');
+          err('Expected a property name in double quotes');
+        }
+        var key=parseString();
+        skipWs();
+        if(peek()!==':') err('Expected ":" after property name "'+key.value+'"');
+        adv(); skipWs();
+        var val=parseValue();
+        pairs.push([key,val]);
+        skipWs();
+        if(peek()===','){ adv(); skipWs();
+          if(peek()==='}') err('Trailing comma before "}" is not allowed in JSON');
+          continue; }
+        if(peek()==='}'){ adv(); break; }
+        err('Expected "," or "}" after value');
+      }
+      return {type:'object', pairs:pairs};
+    }
+    function parseArray(){
+      adv(); var items=[]; skipWs();
+      if(peek()===']'){ adv(); return {type:'array', items:items}; }
+      while(true){
+        skipWs();
+        if(peek()===']'){ err('Trailing comma before "]" is not allowed in JSON'); }
+        items.push(parseValue());
+        skipWs();
+        if(peek()===','){ adv(); skipWs();
+          if(peek()===']') err('Trailing comma before "]" is not allowed in JSON');
+          continue; }
+        if(peek()===']'){ adv(); break; }
+        err('Expected "," or "]" after value');
+      }
+      return {type:'array', items:items};
+    }
+    function parseString(){
+      var startLoc=loc();
+      adv(); var out='';
+      while(true){
+        if(i>=len) err('Unterminated string', startLoc);
+        var c=adv();
+        if(c==='"') break;
+        if(c==='\\'){
+          var e=adv();
+          var map={'"':'"','\\':'\\','/':'/','b':'\b','f':'\f','n':'\n','r':'\r','t':'\t'};
+          if(e==='u'){ var hex=text.substr(i,4); i+=4; col+=4; out+=String.fromCharCode(parseInt(hex,16)); }
+          else if(map[e]!==undefined){ out+=map[e]; }
+          else err('Invalid escape sequence "\\'+e+'"', startLoc);
+        } else if(c.charCodeAt(0)<0x20){ err('Control character in string is not allowed', startLoc); }
+        else out+=c;
+      }
+      return {type:'string', value:out};
+    }
+    function parseNumber(){
+      var start=i, startLoc=loc();
+      if(peek()==='-') adv();
+      if(peek()==='0'){ adv(); } else { if(!/[1-9]/.test(peek()||'')) err('Invalid number', startLoc); while(/[0-9]/.test(peek()||'')) adv(); }
+      if(peek()==='.'){ adv(); if(!/[0-9]/.test(peek()||'')) err('Invalid number - expected digits after "."', startLoc); while(/[0-9]/.test(peek()||'')) adv(); }
+      if(peek()==='e'||peek()==='E'){ adv(); if(peek()==='+'||peek()==='-') adv(); if(!/[0-9]/.test(peek()||'')) err('Invalid number - expected digits in exponent', startLoc); while(/[0-9]/.test(peek()||'')) adv(); }
+      return {type:'number', raw:text.slice(start,i)};
+    }
+
+    var v=parseValue();
+    skipWs();
+    if(i<len) err('Unexpected extra content after the JSON value');
+    return v;
+  }
+
+  function esc(s){ return JSON.stringify(s); }
+
+  function print(node, indent, pretty, pad){
+    pad = pad || '';
+    var nl = pretty ? '\n' : '';
+    var sp = pretty ? ' ' : '';
+    if(node.type==='object'){
+      if(!node.pairs.length) return '{}';
+      var inner = pretty ? pad+indent : '';
+      var body = node.pairs.map(function(p){ return inner+esc(p[0].value)+':'+sp+print(p[1], indent, pretty, pad+indent); }).join(','+nl);
+      return '{'+nl+body+nl+(pretty?pad:'')+'}';
+    }
+    if(node.type==='array'){
+      if(!node.items.length) return '[]';
+      var inner2 = pretty ? pad+indent : '';
+      var body2 = node.items.map(function(it){ return inner2+print(it, indent, pretty, pad+indent); }).join(','+nl);
+      return '['+nl+body2+nl+(pretty?pad:'')+']';
+    }
+    if(node.type==='string') return esc(node.value);
+    if(node.type==='number') return node.raw;
+    return node.raw;
+  }
+
+  function setActiveButton(id){
+    ['jfFormat','jfMinify','jfValidate'].forEach(function(btnId){
+      var btn=;
+      if(btnId===id){
+        btn.classList.remove('btn-outline-primary','btn-outline-secondary');
+        btn.classList.add('btn-primary');
+      } else {
+        btn.classList.remove('btn-primary');
+        btn.classList.add(btnId==='jfValidate' ? 'btn-outline-secondary' : 'btn-outline-primary');
+      }
+    });
+  }
+
+  function setActiveButton(id){
+    ['jfFormat','jfMinify','jfValidate'].forEach(function(btnId){
+      var btn=$(btnId);
+      if(btnId===id){
+        btn.classList.remove('btn-outline-primary','btn-outline-secondary');
+        btn.classList.add('btn-primary');
+      } else {
+        btn.classList.remove('btn-primary');
+        btn.classList.add(btnId==='jfValidate' ? 'btn-outline-secondary' : 'btn-outline-primary');
+      }
+    });
+  }
+
+  function run(pretty){
+    var text=$('jfIn').value;
+    if(!text.trim()){ setMsg('Please paste or enter some JSON first', true); $('jfOut').value=''; return; }
+    try{
+      var ast=parseJSON(text);
+      $('jfOut').value=print(ast, '  ', pretty);
+      setMsg('Valid JSON', false);
+    }catch(err){
+      setMsg(err.message, true);
+      $('jfOut').value='';
+    }
+  }
+  function setMsg(msg, isErr){
+    var el=$('jfMsg');
+    el.textContent = isErr ? msg : '\u2713 '+msg;
+    el.className = 'small mt-2 ' + (isErr ? 'text-danger' : 'text-success');
+  }
+
+  jfFormat.addEventListener('click', function(){ setActiveButton('jfFormat'); run(true); });
+  jfMinify.addEventListener('click', function(){ setActiveButton('jfMinify'); run(false); });
+  jfValidate.addEventListener('click', function(){
+    setActiveButton('jfValidate');
+    setActiveButton('jfValidate');
+    var text=$('jfIn').value;
+    if(!text.trim()){ setMsg('Please paste or enter some JSON first', true); return; }
+    try{ parseJSON(text); setMsg('Valid JSON', false); }catch(err){ setMsg(err.message, true); }
+  });
+  jfClear.addEventListener('click', function(){ jfIn.value=''; jfOut.value=''; jfMsg.textContent=''; setActiveButton('jfFormat'); });
+  $('jfCopy').addEventListener('click', function(){ TK.copy($('jfOut').value); });
+  $('jfDl').addEventListener('click', function(){
+    if(!$('jfOut').value){ TK.toast('Nothing to download'); return; }
+    TK.downloadText($('jfOut').value, 'data.json', 'application/json');
+  });
+})();
+</script>
+
+

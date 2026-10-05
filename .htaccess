@@ -1,0 +1,44 @@
+﻿RewriteEngine On
+
+# Force remove trailing slash (except root)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)/$ /$1 [L,R=301]
+
+# Static SEO endpoints
+RewriteRule ^sitemap\.xml$ sitemap.php [L,QSA]
+RewriteRule ^sitemap/?$ sitemap-page.php [L,QSA]
+RewriteRule ^robots\.txt$ robots.php [L,QSA]
+RewriteRule ^ads\.txt$ ads.php [L,QSA]
+
+# Section listing pages (must come before the tools/blog detail rules)
+RewriteRule ^tools/?$ tools.php [L,QSA]
+RewriteRule ^blog/?$ blog.php [L,QSA]
+RewriteRule ^contact/?$ contact.php [L,QSA]
+RewriteRule ^search/?$ search.php [L,QSA]
+
+# Pretty detail routes -> real PHP files
+RewriteRule ^tools/([a-z0-9-]+)/?$ tool.php?slug=$1 [L,QSA]
+RewriteRule ^blog/([^/]+)/?$ post.php?slug=$1 [L,QSA]
+RewriteRule ^category/([^/]+)/?$ category.php?slug=$1 [L,QSA]
+
+# Static content pages fallback (about-us, privacy-policy, terms-and-conditions, disclaimer, etc.)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([a-z0-9-]+)/?$ page.php?slug=$1 [L,QSA]
+
+# Security
+<FilesMatch "\.(log|sql|md)$">
+  Require all denied
+</FilesMatch>
+Options -Indexes
+
+# Basic caching for assets
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 30 days"
+  ExpiresByType application/javascript "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+</IfModule>
+

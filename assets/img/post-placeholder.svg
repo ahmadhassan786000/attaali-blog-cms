@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 350">
+<rect width="700" height="350" fill="#4f46e5"/>
+<rect width="700" height="350" fill="#06b6d4" opacity="0.35"/>
+<circle cx="350" cy="145" r="42" fill="#ffffff" opacity="0.25"/>
+<path d="M334 125h32v52h-32z" fill="#ffffff" opacity="0.9"/>
+<text x="350" y="240" font-size="28" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="middle">Attaali</text>
+</svg>
