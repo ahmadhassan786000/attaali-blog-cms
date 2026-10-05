@@ -1,38 +1,144 @@
 ﻿RewriteEngine On
 
-# Force remove trailing slash (except root)
+# ==================================================
+# Redirect direct .php URLs to clean URLs
+# ==================================================
+
+# Admin
+RewriteCond %{THE_REQUEST} \s/+attaali/admin/index\.php(?:[?\s]) [NC]
+RewriteRule ^admin/index\.php$ /attaali/admin [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/admin/login\.php(?:[?\s]) [NC]
+RewriteRule ^admin/login\.php$ /attaali/admin/login [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/admin/logout\.php(?:[?\s]) [NC]
+RewriteRule ^admin/logout\.php$ /attaali/admin/logout [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/admin/posts\.php(?:[?\s]) [NC]
+RewriteRule ^admin/posts\.php$ /attaali/admin/posts [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/admin/post-edit\.php(?:[?\s]) [NC]
+RewriteRule ^admin/post-edit\.php$ /attaali/admin/post-edit [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/admin/categories\.php(?:[?\s]) [NC]
+RewriteRule ^admin/categories\.php$ /attaali/admin/categories [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/admin/pages\.php(?:[?\s]) [NC]
+RewriteRule ^admin/pages\.php$ /attaali/admin/pages [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/admin/page-edit\.php(?:[?\s]) [NC]
+RewriteRule ^admin/page-edit\.php$ /attaali/admin/page-edit [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/admin/messages\.php(?:[?\s]) [NC]
+RewriteRule ^admin/messages\.php$ /attaali/admin/messages [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/admin/settings\.php(?:[?\s]) [NC]
+RewriteRule ^admin/settings\.php$ /attaali/admin/settings [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/admin/tools\.php(?:[?\s]) [NC]
+RewriteRule ^admin/tools\.php$ /attaali/admin/tools [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/admin/tool-add\.php(?:[?\s]) [NC]
+RewriteRule ^admin/tool-add\.php$ /attaali/admin/tool-add [R=301,L,NE]
+
+# Install
+RewriteCond %{THE_REQUEST} \s/+attaali/install\.php(?:[?\s]) [NC]
+RewriteRule ^install\.php$ /attaali/install [R=301,L,NE]
+
+# Public PHP pages
+RewriteCond %{THE_REQUEST} \s/+attaali/blog\.php(?:[?\s]) [NC]
+RewriteRule ^blog\.php$ /attaali/blog [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/contact\.php(?:[?\s]) [NC]
+RewriteRule ^contact\.php$ /attaali/contact [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/search\.php(?:[?\s]) [NC]
+RewriteRule ^search\.php$ /attaali/search [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/tools\.php(?:[?\s]) [NC]
+RewriteRule ^tools\.php$ /attaali/tools [R=301,L,NE]
+
+RewriteCond %{THE_REQUEST} \s/+attaali/sitemap-page\.php(?:[?\s]) [NC]
+RewriteRule ^sitemap-page\.php$ /attaali/sitemap [R=301,L,NE]
+
+# ==================================================
+# Force remove trailing slash (except directories)
+# ==================================================
+
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)/$ /$1 [L,R=301]
 
+# ==================================================
+# Admin clean URLs
+# ==================================================
+
+RewriteRule ^admin/?$ admin/index.php [L,QSA]
+RewriteRule ^admin/login/?$ admin/login.php [L,QSA]
+RewriteRule ^admin/logout/?$ admin/logout.php [L,QSA]
+RewriteRule ^admin/posts/?$ admin/posts.php [L,QSA]
+RewriteRule ^admin/post-edit/?$ admin/post-edit.php [L,QSA]
+RewriteRule ^admin/categories/?$ admin/categories.php [L,QSA]
+RewriteRule ^admin/pages/?$ admin/pages.php [L,QSA]
+RewriteRule ^admin/page-edit/?$ admin/page-edit.php [L,QSA]
+RewriteRule ^admin/messages/?$ admin/messages.php [L,QSA]
+RewriteRule ^admin/settings/?$ admin/settings.php [L,QSA]
+RewriteRule ^admin/tools/?$ admin/tools.php [L,QSA]
+RewriteRule ^admin/tool-add/?$ admin/tool-add.php [L,QSA]
+
+# ==================================================
+# Install
+# ==================================================
+
+RewriteRule ^install/?$ install.php [L,QSA]
+
+# ==================================================
 # Static SEO endpoints
+# ==================================================
+
 RewriteRule ^sitemap\.xml$ sitemap.php [L,QSA]
 RewriteRule ^sitemap/?$ sitemap-page.php [L,QSA]
 RewriteRule ^robots\.txt$ robots.php [L,QSA]
 RewriteRule ^ads\.txt$ ads.php [L,QSA]
 
-# Section listing pages (must come before the tools/blog detail rules)
+# ==================================================
+# Section listing pages
+# ==================================================
+
 RewriteRule ^tools/?$ tools.php [L,QSA]
 RewriteRule ^blog/?$ blog.php [L,QSA]
 RewriteRule ^contact/?$ contact.php [L,QSA]
 RewriteRule ^search/?$ search.php [L,QSA]
 
-# Pretty detail routes -> real PHP files
+# ==================================================
+# Pretty detail routes
+# ==================================================
+
 RewriteRule ^tools/([a-z0-9-]+)/?$ tool.php?slug=$1 [L,QSA]
 RewriteRule ^blog/([^/]+)/?$ post.php?slug=$1 [L,QSA]
 RewriteRule ^category/([^/]+)/?$ category.php?slug=$1 [L,QSA]
 
-# Static content pages fallback (about-us, privacy-policy, terms-and-conditions, disclaimer, etc.)
+# ==================================================
+# Static content pages fallback
+# ==================================================
+
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^([a-z0-9-]+)/?$ page.php?slug=$1 [L,QSA]
 
+# ==================================================
 # Security
+# ==================================================
+
 <FilesMatch "\.(log|sql|md)$">
   Require all denied
 </FilesMatch>
+
 Options -Indexes
 
+# ==================================================
 # Basic caching for assets
+# ==================================================
+
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresByType text/css "access plus 30 days"
