@@ -41,4 +41,3 @@ Options -Indexes
   ExpiresByType image/png "access plus 30 days"
   ExpiresByType image/jpeg "access plus 30 days"
 </IfModule>
-

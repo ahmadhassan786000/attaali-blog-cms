@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $_footer_pages = db_all('SELECT title, slug FROM pages WHERE show_in_footer = 1 ORDER BY id ASC');
 $_popular = array_slice(all_tools(), 0, 6, true);
 $_social = array(
@@ -64,5 +64,3 @@ $_social = array(
 <?php echo setting('footer_code', ''); ?>
 </body>
 </html>
-
-
