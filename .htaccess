@@ -1,5 +1,11 @@
 ﻿RewriteEngine On
 
+
+# Block direct admin login URLs
+# Block direct admin login URLs
+RewriteRule ^admin/login/?$ /attaali/404.php [L,NC]
+RewriteRule ^admin/login\.php$ /attaali/404.php [L,NC]
+
 # ==================================================
 # Redirect direct .php URLs to clean URLs
 # ==================================================
@@ -73,7 +79,6 @@ RewriteRule ^(.*)/$ /$1 [L,R=301]
 # ==================================================
 
 RewriteRule ^admin/?$ admin/index.php [L,QSA]
-RewriteRule ^admin/login/?$ admin/login.php [L,QSA]
 RewriteRule ^admin/logout/?$ admin/logout.php [L,QSA]
 RewriteRule ^admin/posts/?$ admin/posts.php [L,QSA]
 RewriteRule ^admin/post-edit/?$ admin/post-edit.php [L,QSA]
@@ -147,3 +152,5 @@ Options -Indexes
   ExpiresByType image/png "access plus 30 days"
   ExpiresByType image/jpeg "access plus 30 days"
 </IfModule>
+
+

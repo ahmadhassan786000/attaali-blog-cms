@@ -42,6 +42,15 @@ if (!$isLogin) {
         unset($_SESSION['admin_id']);
 
         /*
+         * If /admin (dashboard) is requested without login,
+         * show the login page at the same /admin URL.
+         */
+        if (basename($_SERVER['SCRIPT_NAME']) === 'index.php') {
+            require __DIR__ . '/login.php';
+            exit;
+        }
+
+        /*
          * Destroy the current authenticated session.
          */
         $_SESSION = array();
@@ -249,4 +258,5 @@ function admin_footer()
 </html>
 <?php
 }
+
 
