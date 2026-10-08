@@ -194,8 +194,20 @@ function start_session()
 {
     if (session_status() === PHP_SESSION_NONE) {
         session_name('attaali_sid');
-        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-        session_set_cookie_params(0, '/', '', $https, true);
+        $https = (
+            (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
+            || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443)
+        );
+
+        session_set_cookie_params(array(
+            'lifetime' => 0,
+            'path' => '/',
+            'domain' => '',
+            'secure' => $https,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ));
         session_start();
     }
 }
@@ -382,4 +394,5 @@ function post_image($p)
     }
     return asset('img/post-placeholder.svg');
 }
+
 
